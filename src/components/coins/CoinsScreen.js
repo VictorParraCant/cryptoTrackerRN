@@ -1,0 +1,87 @@
+import React, { Component } from 'react';
+import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import Http from '../../libs/http';
+import CoinsItem from './CoinsItem';
+import Colors from '../../res/colors';
+import CoinsSearch from './CoinsSearch';
+
+class CoinsScreen extends Component {
+    state = {
+        coins: [],
+        allCoins: [],
+        loading: false
+    }
+
+    componentDidMount = async () => {
+        this.getCoins()
+    }
+
+    getCoins = async () => {
+        this.setState({ loading: true })
+        const res = await Http.instance.get('https://api.coinlore.net/api/tickers/');
+        this.setState({ coins: res.data, allCoins: res.data, loading: false })
+    }
+
+    handlePress = (coin) => {
+        this.props.navigation.navigate('CoinDetail', { coin });
+    }
+
+    handleSearch = (query) => {
+        const { allCoins } = this.state
+        const coinsFiltered = allCoins.filter(coin => {
+            return coin.name.toLowerCase().includes(query.toLowerCase()) ||
+                coin.symbol.toLowerCase().includes(query.toLowerCase())
+        })
+
+        return this.setState({ coins: coinsFiltered })
+    }
+
+    render() {
+        const { coins, loading } = this.state;
+
+        return (
+            <View style={styles.container}>
+                <CoinsSearch onChange={this.handleSearch} />
+
+                {loading
+                    ? <ActivityIndicator color={Colors.white} size='large' />
+                    : <FlatList
+                        data={coins}
+                        renderItem={({ item }) =>
+                            <CoinsItem
+                                item={item}
+                                onPress={() => this.handlePress(item)}
+                            />
+                        }
+                    />
+                }
+            </View>
+        );
+    }
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingHorizontal: 4,
+        backgroundColor: Colors.charade
+    },
+    titleText: {
+        alignItems: 'center',
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    btn: {
+        padding: 8,
+        paddingHorizontal: 16,
+        backgroundColor: 'blue',
+        borderRadius: 8,
+        margin: 16,
+    },
+    btnText: {
+        color: '#fff',
+        textAlign: 'center'
+    }
+})
+
+export default CoinsScreen;
